@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead",
+      "description": "A customer inquiry or prospective client lead for StreamOn digital marketing services",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the lead",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "description": "Customer full name",
+          "maxLength": 150
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Customer contact email address",
+          "maxLength": 150
+        },
+        "phone": {
+          "type": "string",
+          "description": "Customer contact phone or WhatsApp number",
+          "maxLength": 50
+        },
+        "company": {
+          "type": "string",
+          "description": "Customer brand or business name",
+          "maxLength": 150
+        },
+        "serviceInterested": {
+          "type": "string",
+          "description": "Service category or growth package",
+          "maxLength": 150
+        },
+        "budgetRange": {
+          "type": "string",
+          "description": "Customer monthly growth budget tier",
+          "maxLength": 80
+        },
+        "message": {
+          "type": "string",
+          "description": "Inquiry message or project description",
+          "maxLength": 3000
+        },
+        "status": {
+          "type": "string",
+          "description": "CRM status of the lead",
+          "enum": ["new", "contacted", "in_progress", "closed", "junk", "New", "Contacted", "In Progress", "Converted", "Lost"]
+        },
+        "sourcePage": {
+          "type": "string",
+          "description": "Website page or section where the lead was generated",
+          "maxLength": 100
+        },
+        "internalNotes": {
+          "type": "string",
+          "description": "Agency private notes",
+          "maxLength": 4000
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp ISO string",
+          "maxLength": 100
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp ISO string",
+          "maxLength": 100
+        },
+        "lastContactedAt": {
+          "type": "string",
+          "description": "Last contacted timestamp ISO string",
+          "maxLength": 100
+        }
+      },
+      "required": ["name", "email", "phone", "serviceInterested", "message", "status"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Agency configuration, contact credentials and public content",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identifier for the settings document",
+          "maxLength": 128
+        },
+        "contactInfo": {
+          "type": "object",
+          "description": "Agency contact info object"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp",
+          "maxLength": 100
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Email or UID of updating admin",
+          "maxLength": 150
+        }
+      },
+      "required": ["contactInfo"]
+    }
+  },
+  "firestore": {
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Collection of client leads submitted through website and managed in admin CRM"
+    },
+    "/site_settings/{settingId}": {
+      "schema": "SiteSettings",
+      "description": "Global settings and content configurations for StreamOn agency"
+    }
+  }
+}

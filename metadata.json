@@ -1,0 +1,8 @@
+{
+  "name": "Remix StreamOn - Digital Marketing Agency",
+  "description": "Official website and admin lead management portal for StreamOn Digital Marketing Agency. Powered by data-driven marketing, social media management, e-commerce onboarding, and creative catalog design.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
