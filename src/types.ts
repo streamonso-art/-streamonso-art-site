@@ -63,6 +63,19 @@ export interface ServiceItem {
   badge?: string;
 }
 
+export interface PricingPackage {
+  id: string;
+  name: string;
+  subtitle: string;
+  priceMonthly: string;
+  priceQuarterly: string;
+  period: string;
+  badge: string;
+  features: string[];
+  popular: boolean;
+  accent?: string;
+}
+
 export interface ContactInfo {
   agencyName: string;
   tagline: string;

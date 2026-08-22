@@ -1,74 +1,78 @@
 import React, { useState } from 'react';
 import { Check, Sparkles, Zap, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
+import { PricingPackage } from '../types';
 
 interface PricingPackagesProps {
+  packages?: PricingPackage[];
   onSelectPackage: (packageName: string) => void;
 }
 
-export const PricingPackages: React.FC<PricingPackagesProps> = ({ onSelectPackage }) => {
+const defaultPackages: PricingPackage[] = [
+  {
+    id: 'starter',
+    name: 'Launchpad Starter',
+    subtitle: 'Best for local brands & new marketplace sellers.',
+    priceMonthly: '₹14,999',
+    priceQuarterly: '₹39,999',
+    period: '/ month',
+    badge: 'Fast Launch',
+    features: [
+      'Single Marketplace Setup (Amazon OR Flipkart)',
+      'Basic Social Media Management (12 Posts/Mo)',
+      'Keyword & Competitor Discovery',
+      'Standard 2D Catalog Setup (Up to 15 SKUs)',
+      'Monthly ROI Performance Review',
+      'Direct WhatsApp Chat Support'
+    ],
+    popular: false,
+    accent: 'border-neutral-800'
+  },
+  {
+    id: 'growth',
+    name: 'Growth Accelerator',
+    subtitle: 'Engineered for scaling D2C brands & retail businesses.',
+    priceMonthly: '₹29,999',
+    priceQuarterly: '₹79,999',
+    period: '/ month',
+    badge: 'Most Popular',
+    features: [
+      'Multi-Marketplace (Amazon + Flipkart + Myntra)',
+      'Full Social Media Management (20 Posts + 6 Reels)',
+      'Google & Meta Ads PPC Campaign Management',
+      'Enhanced Brand Content (A+ Listing & Storefront)',
+      '2D & 3D High-Res Product Imagery',
+      'Weekly Ad Optimization & Negative Keyword Pruning',
+      'Dedicated Senior Account Strategist (Somnath Banerjee)'
+    ],
+    popular: true,
+    accent: 'border-[#B4FF39]'
+  },
+  {
+    id: 'highpower',
+    name: 'High Power Domination',
+    subtitle: 'Full spectrum omnichannel enterprise domination.',
+    priceMonthly: '₹54,999',
+    priceQuarterly: '₹1,44,999',
+    period: '/ month',
+    badge: 'Omnichannel',
+    features: [
+      'Complete Omnichannel Suite (All Marketplaces + Web)',
+      'Daily Social Media Content & Viral Video Engine',
+      'High-Scale PPC Management (Zero Wasted Spend Protocol)',
+      'Complete 3D Lookbook & Catalog Designing (50+ SKUs)',
+      'Dynamic Retargeting & Email Automation Funnels',
+      'Daily Real-Time Campaign Monitoring (Always On)',
+      'Priority 24/7 Phone & In-Person Strategic Reviews'
+    ],
+    popular: false,
+    accent: 'border-neutral-800'
+  }
+];
+
+export const PricingPackages: React.FC<PricingPackagesProps> = ({ packages = [], onSelectPackage }) => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'quarterly'>('monthly');
 
-  const packages = [
-    {
-      id: 'starter',
-      name: 'Launchpad Starter',
-      subtitle: 'Best for local brands & new marketplace sellers.',
-      priceMonthly: '₹14,999',
-      priceQuarterly: '₹39,999',
-      period: '/ month',
-      badge: 'Fast Launch',
-      features: [
-        'Single Marketplace Setup (Amazon OR Flipkart)',
-        'Basic Social Media Management (12 Posts/Mo)',
-        'Keyword & Competitor Discovery',
-        'Standard 2D Catalog Setup (Up to 15 SKUs)',
-        'Monthly ROI Performance Review',
-        'Direct WhatsApp Chat Support'
-      ],
-      popular: false,
-      accent: 'border-neutral-800'
-    },
-    {
-      id: 'growth',
-      name: 'Growth Accelerator',
-      subtitle: 'Engineered for scaling D2C brands & retail businesses.',
-      priceMonthly: '₹29,999',
-      priceQuarterly: '₹79,999',
-      period: '/ month',
-      badge: 'Most Popular',
-      features: [
-        'Multi-Marketplace (Amazon + Flipkart + Myntra)',
-        'Full Social Media Management (20 Posts + 6 Reels)',
-        'Google & Meta Ads PPC Campaign Management',
-        'Enhanced Brand Content (A+ Listing & Storefront)',
-        '2D & 3D High-Res Product Imagery',
-        'Weekly Ad Optimization & Negative Keyword Pruning',
-        'Dedicated Senior Account Strategist (Somnath Banerjee)'
-      ],
-      popular: true,
-      accent: 'border-[#B4FF39]'
-    },
-    {
-      id: 'highpower',
-      name: 'High Power Domination',
-      subtitle: 'Full spectrum omnichannel enterprise domination.',
-      priceMonthly: '₹54,999',
-      priceQuarterly: '₹1,44,999',
-      period: '/ month',
-      badge: 'Omnichannel',
-      features: [
-        'Complete Omnichannel Suite (All Marketplaces + Web)',
-        'Daily Social Media Content & Viral Video Engine',
-        'High-Scale PPC Management (Zero Wasted Spend Protocol)',
-        'Complete 3D Lookbook & Catalog Designing (50+ SKUs)',
-        'Dynamic Retargeting & Email Automation Funnels',
-        'Daily Real-Time Campaign Monitoring (Always On)',
-        'Priority 24/7 Phone & In-Person Strategic Reviews'
-      ],
-      popular: false,
-      accent: 'border-neutral-800'
-    }
-  ];
+  const listToRender = packages && packages.length > 0 ? packages : defaultPackages;
 
   return (
     <section id="pricing" className="py-24 bg-[#0D0D0D] relative overflow-hidden">
@@ -120,7 +124,7 @@ export const PricingPackages: React.FC<PricingPackagesProps> = ({ onSelectPackag
 
         {/* Pricing Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-          {packages.map((pkg) => {
+          {listToRender.map((pkg) => {
             const currentPrice = billingCycle === 'monthly' ? pkg.priceMonthly : pkg.priceQuarterly;
             const currentPeriod = billingCycle === 'monthly' ? '/ month' : '/ quarter';
 

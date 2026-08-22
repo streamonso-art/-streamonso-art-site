@@ -5,7 +5,8 @@ import {
   FAQItem,
   GalleryItem,
   ServiceItem,
-  Lead
+  Lead,
+  PricingPackage
 } from './types';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
@@ -137,6 +138,7 @@ export default function App() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [packages, setPackages] = useState<PricingPackage[]>([]);
   const [leadsCount, setLeadsCount] = useState<number>(0);
   
   // UI state
@@ -154,6 +156,7 @@ export default function App() {
         if (data.blogPosts && data.blogPosts.length) setBlogPosts(data.blogPosts);
         if (data.faqs && data.faqs.length) setFaqs(data.faqs);
         if (data.gallery && data.gallery.length) setGallery(data.gallery);
+        if (data.packages && data.packages.length) setPackages(data.packages);
       }
     } catch (err) {
       console.error('Error fetching CMS content:', err);
@@ -241,6 +244,7 @@ export default function App() {
 
         {/* Growth Pricing Packages */}
         <PricingPackages
+          packages={packages}
           onSelectPackage={(pkgName) => scrollToContact(`Package: ${pkgName}`)}
         />
 
@@ -307,6 +311,10 @@ export default function App() {
           onUpdateFaqs={(updated) => setFaqs(updated)}
           gallery={gallery}
           onUpdateGallery={(updated) => setGallery(updated)}
+          services={services}
+          onUpdateServices={(updated) => setServices(updated)}
+          packages={packages}
+          onUpdatePackages={(updated) => setPackages(updated)}
         />
       )}
 

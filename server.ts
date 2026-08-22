@@ -358,6 +358,67 @@ By applying daily negative keyword pruning and real-time ROI tracking, every sin
       platforms: ['Instagram Reels', 'TikTok', 'YouTube Ads', 'Website Hero'],
       badge: 'Next-Gen'
     }
+  ],
+  packages: [
+    {
+      id: 'starter',
+      name: 'Launchpad Starter',
+      subtitle: 'Best for local brands & new marketplace sellers.',
+      priceMonthly: '₹14,999',
+      priceQuarterly: '₹39,999',
+      period: '/ month',
+      badge: 'Fast Launch',
+      features: [
+        'Single Marketplace Setup (Amazon OR Flipkart)',
+        'Basic Social Media Management (12 Posts/Mo)',
+        'Keyword & Competitor Discovery',
+        'Standard 2D Catalog Setup (Up to 15 SKUs)',
+        'Monthly ROI Performance Review',
+        'Direct WhatsApp Chat Support'
+      ],
+      popular: false,
+      accent: 'border-neutral-800'
+    },
+    {
+      id: 'growth',
+      name: 'Growth Accelerator',
+      subtitle: 'Engineered for scaling D2C brands & retail businesses.',
+      priceMonthly: '₹29,999',
+      priceQuarterly: '₹79,999',
+      period: '/ month',
+      badge: 'Most Popular',
+      features: [
+        'Multi-Marketplace (Amazon + Flipkart + Myntra)',
+        'Full Social Media Management (20 Posts + 6 Reels)',
+        'Google & Meta Ads PPC Campaign Management',
+        'Enhanced Brand Content (A+ Listing & Storefront)',
+        '2D & 3D High-Res Product Imagery',
+        'Weekly Ad Optimization & Negative Keyword Pruning',
+        'Dedicated Senior Account Strategist (Somnath Banerjee)'
+      ],
+      popular: true,
+      accent: 'border-[#B4FF39]'
+    },
+    {
+      id: 'highpower',
+      name: 'High Power Domination',
+      subtitle: 'Full spectrum omnichannel enterprise domination.',
+      priceMonthly: '₹54,999',
+      priceQuarterly: '₹1,44,999',
+      period: '/ month',
+      badge: 'Omnichannel',
+      features: [
+        'Complete Omnichannel Suite (All Marketplaces + Web)',
+        'Daily Social Media Content & Viral Video Engine',
+        'High-Scale PPC Management (Zero Wasted Spend Protocol)',
+        'Complete 3D Lookbook & Catalog Designing (50+ SKUs)',
+        'Dynamic Retargeting & Email Automation Funnels',
+        'Daily Real-Time Campaign Monitoring (Always On)',
+        'Priority 24/7 Phone & In-Person Strategic Reviews'
+      ],
+      popular: false,
+      accent: 'border-neutral-800'
+    }
   ]
 };
 
@@ -366,7 +427,11 @@ function loadData() {
   try {
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, 'utf8');
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      // Backwards compatibility/migration if key doesn't exist
+      if (!parsed.packages) parsed.packages = initialData.packages;
+      if (!parsed.services) parsed.services = initialData.services;
+      return parsed;
     }
   } catch (err) {
     console.error('Error reading db.json, using defaults:', err);
@@ -406,7 +471,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', agency: 'StreamOn - Digital Marketing Agency', timestamp: new Date().toISOString() });
 });
 
-// 2. Public Site Content (Contact Info, FAQs, Blog Posts, Gallery, Services)
+// 2. Public Site Content (Contact Info, FAQs, Blog Posts, Gallery, Services, Packages)
 app.get('/api/content', (req, res) => {
   const db = loadData();
   res.json({
@@ -414,8 +479,111 @@ app.get('/api/content', (req, res) => {
     faqs: db.faqs || initialData.faqs,
     blogPosts: db.blogPosts || initialData.blogPosts,
     gallery: db.gallery || initialData.gallery,
-    services: db.services || initialData.services
+    services: db.services || initialData.services,
+    packages: db.packages || initialData.packages
   });
+});
+
+// Services CRUD endpoints
+app.post('/api/content/services', (req, res) => {
+  const { title, subtitle, description, iconName, features, platforms, badge } = req.body;
+  if (!title || !description) {
+    return res.status(400).json({ error: 'Title and description are required.' });
+  }
+
+  const db = loadData();
+  const newService = {
+    id: 'srv-' + Date.now(),
+    title: title.trim(),
+    subtitle: (subtitle || '').trim(),
+    description: description.trim(),
+    iconName: iconName || 'Zap',
+    features: Array.isArray(features) ? features : [],
+    platforms: Array.isArray(platforms) ? platforms : [],
+    badge: (badge || '').trim()
+  };
+
+  db.services = [...(db.services || []), newService];
+  saveData(db);
+  res.status(201).json({ success: true, service: newService });
+});
+
+app.put('/api/content/services/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadData();
+  const index = (db.services || []).findIndex((s: any) => s.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Service not found' });
+  }
+
+  db.services[index] = {
+    ...db.services[index],
+    ...req.body
+  };
+
+  saveData(db);
+  res.json({ success: true, service: db.services[index] });
+});
+
+app.delete('/api/content/services/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadData();
+  db.services = (db.services || []).filter((s: any) => s.id !== id);
+  saveData(db);
+  res.json({ success: true, message: 'Service deleted' });
+});
+
+// Pricing Packages CRUD endpoints
+app.post('/api/content/packages', (req, res) => {
+  const { name, subtitle, priceMonthly, priceQuarterly, period, badge, features, popular, accent } = req.body;
+  if (!name || !priceMonthly) {
+    return res.status(400).json({ error: 'Package Name and monthly price are required.' });
+  }
+
+  const db = loadData();
+  const newPackage = {
+    id: 'pkg-' + Date.now(),
+    name: name.trim(),
+    subtitle: (subtitle || '').trim(),
+    priceMonthly: priceMonthly.trim(),
+    priceQuarterly: priceQuarterly || priceMonthly,
+    period: period || '/ month',
+    badge: (badge || '').trim(),
+    features: Array.isArray(features) ? features : [],
+    popular: !!popular,
+    accent: accent || 'border-neutral-800'
+  };
+
+  db.packages = [...(db.packages || []), newPackage];
+  saveData(db);
+  res.status(201).json({ success: true, package: newPackage });
+});
+
+app.put('/api/content/packages/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadData();
+  const index = (db.packages || []).findIndex((p: any) => p.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Package not found' });
+  }
+
+  db.packages[index] = {
+    ...db.packages[index],
+    ...req.body
+  };
+
+  saveData(db);
+  res.json({ success: true, package: db.packages[index] });
+});
+
+app.delete('/api/content/packages/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadData();
+  db.packages = (db.packages || []).filter((p: any) => p.id !== id);
+  saveData(db);
+  res.json({ success: true, message: 'Package deleted' });
 });
 
 // 3. Leads API - Capture enquiry form submission

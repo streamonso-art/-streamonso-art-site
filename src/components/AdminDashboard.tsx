@@ -5,7 +5,8 @@ import {
   BlogPost,
   FAQItem,
   GalleryItem,
-  ServiceItem
+  ServiceItem,
+  PricingPackage
 } from '../types';
 import {
   ShieldCheck,
@@ -59,6 +60,10 @@ interface AdminDashboardProps {
   onUpdateFaqs: (faqs: FAQItem[]) => void;
   gallery: GalleryItem[];
   onUpdateGallery: (gallery: GalleryItem[]) => void;
+  services: ServiceItem[];
+  onUpdateServices: (services: ServiceItem[]) => void;
+  packages: PricingPackage[];
+  onUpdatePackages: (packages: PricingPackage[]) => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -70,9 +75,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   faqs,
   onUpdateFaqs,
   gallery,
-  onUpdateGallery
+  onUpdateGallery,
+  services,
+  onUpdateServices,
+  packages,
+  onUpdatePackages
 }) => {
-  const [activeTab, setActiveTab] = useState<'leads' | 'sheets' | 'drive' | 'contact' | 'blog' | 'faq' | 'gallery'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'sheets' | 'drive' | 'contact' | 'blog' | 'faq' | 'gallery' | 'services' | 'packages'>('leads');
   
   // Auth & Workspace OAuth State
   const [user, setUser] = useState<User | null>(null);
@@ -109,6 +118,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Gallery Editor State
   const [editingGallery, setEditingGallery] = useState<GalleryItem | null>(null);
   const [isCreatingGallery, setIsCreatingGallery] = useState(false);
+
+  // Service Editor State
+  const [editingService, setEditingService] = useState<ServiceItem | null>(null);
+  const [isCreatingService, setIsCreatingService] = useState(false);
+
+  // Package Editor State
+  const [editingPackage, setEditingPackage] = useState<PricingPackage | null>(null);
+  const [isCreatingPackage, setIsCreatingPackage] = useState(false);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMsg({ text, type });
@@ -420,6 +437,92 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  // Service Management handlers
+  const handleSaveService = async (service: Partial<ServiceItem>) => {
+    try {
+      const isNew = !service.id;
+      const url = isNew ? '/api/content/services' : `/api/content/services/${service.id}`;
+      const method = isNew ? 'POST' : 'PUT';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(service)
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const saved = data.service;
+        if (isNew) {
+          onUpdateServices([...services, saved]);
+        } else {
+          onUpdateServices(services.map(s => s.id === saved.id ? saved : s));
+        }
+        setEditingService(null);
+        setIsCreatingService(false);
+        showToast(`Service "${saved.title}" saved successfully`);
+      }
+    } catch (err) {
+      showToast('Failed to save service', 'error');
+    }
+  };
+
+  const handleDeleteService = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this service?')) return;
+    try {
+      const res = await fetch(`/api/content/services/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        onUpdateServices(services.filter(s => s.id !== id));
+        showToast('Service deleted successfully');
+      }
+    } catch (err) {
+      showToast('Failed to delete service', 'error');
+    }
+  };
+
+  // Pricing Package Management handlers
+  const handleSavePackage = async (pkg: Partial<PricingPackage>) => {
+    try {
+      const isNew = !pkg.id;
+      const url = isNew ? '/api/content/packages' : `/api/content/packages/${pkg.id}`;
+      const method = isNew ? 'POST' : 'PUT';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pkg)
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const saved = data.package;
+        if (isNew) {
+          onUpdatePackages([...packages, saved]);
+        } else {
+          onUpdatePackages(packages.map(p => p.id === saved.id ? saved : p));
+        }
+        setEditingPackage(null);
+        setIsCreatingPackage(false);
+        showToast(`Package "${saved.name}" saved successfully`);
+      }
+    } catch (err) {
+      showToast('Failed to save package', 'error');
+    }
+  };
+
+  const handleDeletePackage = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this pricing package?')) return;
+    try {
+      const res = await fetch(`/api/content/packages/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        onUpdatePackages(packages.filter(p => p.id !== id));
+        showToast('Package deleted successfully');
+      }
+    } catch (err) {
+      showToast('Failed to delete package', 'error');
+    }
+  };
+
   // Filtered Leads
   const filteredLeads = leads.filter(l => {
     const matchesStatus = leadFilterStatus === 'all' || l.status === leadFilterStatus;
@@ -605,6 +708,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <ImageIcon className="w-4 h-4" />
               <span>Product & Work Gallery</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('services')}
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'services'
+                  ? 'bg-[#B4FF39] text-neutral-950 shadow-md'
+                  : 'text-neutral-300 hover:bg-neutral-900 hover:text-white'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>Agency Services Menu</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('packages')}
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'packages'
+                  ? 'bg-[#B4FF39] text-neutral-950 shadow-md'
+                  : 'text-neutral-300 hover:bg-neutral-900 hover:text-white'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Pricing Packages CMS</span>
+            </button>
           </nav>
 
           {/* Agency Founder Quick Badge */}
@@ -626,7 +753,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'contact', label: 'Contact', icon: Settings },
             { id: 'blog', label: 'Blog', icon: FileText },
             { id: 'faq', label: 'FAQ', icon: HelpCircle },
-            { id: 'gallery', label: 'Gallery', icon: ImageIcon }
+            { id: 'gallery', label: 'Gallery', icon: ImageIcon },
+            { id: 'services', label: 'Services', icon: Layers },
+            { id: 'packages', label: 'Pricing', icon: Sparkles }
           ].map(t => {
             const Icon = t.icon;
             return (
@@ -1591,6 +1720,547 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         className="px-5 py-2 rounded-xl bg-[#B4FF39] text-neutral-950 text-xs font-bold hover:bg-[#c4ff5e]"
                       >
                         Save Showcase
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 6: AGENCY SERVICES MENU */}
+          {activeTab === 'services' && (
+            <div className="space-y-6 max-w-4xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-white">Agency Services & Menu Customization</h2>
+                  <p className="text-xs text-neutral-400 mt-1">
+                    Manage the core digital marketing, e-commerce, ads and catalog capabilities displayed on your landing page.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setEditingService({
+                      id: '',
+                      title: '',
+                      subtitle: '',
+                      description: '',
+                      iconName: 'Zap',
+                      features: [''],
+                      platforms: [''],
+                      badge: ''
+                    });
+                    setIsCreatingService(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-[#B4FF39] text-neutral-950 font-bold text-xs hover:bg-[#c4ff5e] flex items-center gap-1.5 cursor-pointer shadow"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add New Service</span>
+                </button>
+              </div>
+
+              {/* Services List */}
+              <div className="space-y-4">
+                {services.map((srv) => (
+                  <div
+                    key={srv.id}
+                    className="p-5 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-start justify-between gap-4 hover:border-neutral-700 transition-all"
+                  >
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="p-1.5 rounded-lg bg-neutral-950 text-[#B4FF39] border border-neutral-800 flex items-center justify-center font-bold">
+                          {srv.iconName || 'Zap'}
+                        </span>
+                        <h4 className="text-base font-extrabold text-white">{srv.title}</h4>
+                        {srv.badge && (
+                          <span className="px-2.5 py-0.5 rounded bg-[#B4FF39]/10 text-[#B4FF39] text-[10px] font-bold border border-[#B4FF39]/30">
+                            {srv.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-neutral-400 font-semibold">{srv.subtitle}</p>
+                      <p className="text-xs text-neutral-300 leading-relaxed">{srv.description}</p>
+                      
+                      {/* Platforms tag badges */}
+                      {srv.platforms && srv.platforms.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1.5">
+                          <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mr-1 mt-0.5">Platforms:</span>
+                          {srv.platforms.map((plat, idx) => (
+                            <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-neutral-950 border border-neutral-800 text-neutral-300">
+                              {plat}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Features minichecklist */}
+                      {srv.features && srv.features.length > 0 && (
+                        <div className="pt-2 space-y-1">
+                          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Features Included:</div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-neutral-300">
+                            {srv.features.map((feat, idx) => (
+                              <div key={idx} className="flex items-center gap-1.5">
+                                <span className="text-[#B4FF39] font-bold">•</span>
+                                <span>{feat}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => {
+                          setEditingService(srv);
+                          setIsCreatingService(false);
+                        }}
+                        className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold"
+                        title="Edit Service"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteService(srv.id)}
+                        className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30"
+                        title="Delete Service"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Service Editor Modal */}
+              {editingService && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+                  <div className="w-full max-w-2xl bg-neutral-900 border border-neutral-700 rounded-3xl p-6 space-y-4 my-8">
+                    <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+                      <h3 className="text-lg font-bold text-white">
+                        {isCreatingService ? 'Add New Agency Service' : 'Edit Service Settings'}
+                      </h3>
+                      <button onClick={() => setEditingService(null)} className="text-neutral-400 hover:text-white">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Service Title</label>
+                          <input
+                            type="text"
+                            required
+                            value={editingService.title}
+                            onChange={(e) => setEditingService({ ...editingService, title: e.target.value })}
+                            placeholder="e.g. Google & Meta Paid Advertising"
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none focus:border-[#B4FF39]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Subtitle / Punchline</label>
+                          <input
+                            type="text"
+                            value={editingService.subtitle}
+                            onChange={(e) => setEditingService({ ...editingService, subtitle: e.target.value })}
+                            placeholder="e.g. Stop burning advertising budget, start scaling sales"
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Lucide Icon Name</label>
+                          <select
+                            value={editingService.iconName}
+                            onChange={(e) => setEditingService({ ...editingService, iconName: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                          >
+                            <option value="Share2">Share2 (Social Media)</option>
+                            <option value="ShoppingCart">ShoppingCart (E-Commerce)</option>
+                            <option value="TrendingUp">TrendingUp (Ads / Analytics)</option>
+                            <option value="Palette">Palette (Graphic Design)</option>
+                            <option value="Rocket">Rocket (Launch / Onboarding)</option>
+                            <option value="Video">Video (Reels / Production)</option>
+                            <option value="Zap">Zap (Dynamic Strategy)</option>
+                            <option value="Sparkles">Sparkles (Premium AI)</option>
+                            <option value="LineChart">LineChart (Reporting)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Badge Display (optional)</label>
+                          <input
+                            type="text"
+                            value={editingService.badge || ''}
+                            onChange={(e) => setEditingService({ ...editingService, badge: e.target.value })}
+                            placeholder="e.g. Most Popular, 20% Off"
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-neutral-300 font-semibold mb-1">Service Description</label>
+                        <textarea
+                          rows={3}
+                          value={editingService.description}
+                          onChange={(e) => setEditingService({ ...editingService, description: e.target.value })}
+                          placeholder="Comprehensive summary detailing deliverables and performance value of the service offering..."
+                          className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-neutral-300 font-semibold mb-1">
+                          Platforms Supported (Comma separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={Array.isArray(editingService.platforms) ? editingService.platforms.join(', ') : ''}
+                          onChange={(e) => {
+                            const arr = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                            setEditingService({ ...editingService, platforms: arr });
+                          }}
+                          placeholder="e.g. Amazon, Flipkart, Instagram, Meta Ads"
+                          className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-neutral-300 font-semibold">Included Feature Highlights</label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const f = [...(editingService.features || []), ''];
+                              setEditingService({ ...editingService, features: f });
+                            }}
+                            className="text-[#B4FF39] font-bold hover:underline text-[11px]"
+                          >
+                            + Add Feature Bullet
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {(editingService.features || []).map((feat, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={feat}
+                                onChange={(e) => {
+                                  const updated = [...(editingService.features || [])];
+                                  updated[idx] = e.target.value;
+                                  setEditingService({ ...editingService, features: updated });
+                                }}
+                                placeholder={`Feature bullet #${idx + 1}`}
+                                className="flex-1 px-3 py-1.5 rounded-lg bg-neutral-950 border border-neutral-800 text-white outline-none text-xs"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = (editingService.features || []).filter((_, fIdx) => fIdx !== idx);
+                                  setEditingService({ ...editingService, features: updated });
+                                }}
+                                className="text-red-400 hover:text-red-300 px-2 font-semibold"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-800 flex justify-end gap-3">
+                      <button
+                        onClick={() => setEditingService(null)}
+                        className="px-4 py-2 rounded-xl bg-neutral-800 text-neutral-300 text-xs font-semibold"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleSaveService(editingService)}
+                        className="px-5 py-2 rounded-xl bg-[#B4FF39] text-neutral-950 text-xs font-bold hover:bg-[#c4ff5e]"
+                      >
+                        Save Service Offer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 7: PRICING PACKAGES */}
+          {activeTab === 'packages' && (
+            <div className="space-y-6 max-w-4xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-white">Pricing Packages & Investment Tiers</h2>
+                  <p className="text-xs text-neutral-400 mt-1">
+                    Manage service retainer levels, pricing numbers (Monthly vs Quarterly), and features listed inside packages.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setEditingPackage({
+                      id: '',
+                      name: '',
+                      subtitle: '',
+                      priceMonthly: '₹25,000',
+                      priceQuarterly: '₹65,000',
+                      period: '/ month',
+                      badge: '',
+                      features: [''],
+                      popular: false,
+                      accent: 'border-neutral-800'
+                    });
+                    setIsCreatingPackage(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-[#B4FF39] text-neutral-950 font-bold text-xs hover:bg-[#c4ff5e] flex items-center gap-1.5 cursor-pointer shadow"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add New Package</span>
+                </button>
+              </div>
+
+              {/* Packages List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {packages.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className={`p-5 rounded-2xl bg-neutral-900 border ${
+                      pkg.popular ? 'border-[#B4FF39] shadow-[0_0_15px_rgba(180,255,57,0.1)]' : 'border-neutral-800'
+                    } flex flex-col justify-between gap-4`}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="text-base font-extrabold text-white">{pkg.name}</h4>
+                          <p className="text-xs text-neutral-400 mt-0.5">{pkg.subtitle}</p>
+                        </div>
+                        {pkg.popular && (
+                          <span className="px-2 py-0.5 rounded bg-[#B4FF39] text-neutral-950 text-[9px] font-extrabold uppercase">
+                            Popular Choice
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 flex justify-between items-center text-xs">
+                        <div>
+                          <span className="text-neutral-400 font-medium">Monthly:</span>{' '}
+                          <span className="text-[#B4FF39] font-black font-mono text-sm">{pkg.priceMonthly}</span>
+                        </div>
+                        <div>
+                          <span className="text-neutral-400 font-medium">Quarterly:</span>{' '}
+                          <span className="text-white font-black font-mono text-sm">{pkg.priceQuarterly}</span>
+                        </div>
+                      </div>
+
+                      {/* Package Features List */}
+                      {pkg.features && pkg.features.length > 0 && (
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Features Included:</div>
+                          <div className="space-y-1 text-xs text-neutral-300">
+                            {pkg.features.map((feat, idx) => (
+                              <div key={idx} className="flex items-start gap-1.5">
+                                <span className="text-[#B4FF39] font-bold font-mono">•</span>
+                                <span>{feat}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-800 flex justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingPackage(pkg);
+                          setIsCreatingPackage(false);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-neutral-850 hover:bg-neutral-800 border border-neutral-800 text-neutral-200 text-xs font-bold"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePackage(pkg.id)}
+                        className="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30 text-xs font-bold"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Package Editor Modal */}
+              {editingPackage && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+                  <div className="w-full max-w-2xl bg-neutral-900 border border-neutral-700 rounded-3xl p-6 space-y-4 my-8">
+                    <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+                      <h3 className="text-lg font-bold text-white">
+                        {isCreatingPackage ? 'Add New Pricing Package' : 'Edit Package Details'}
+                      </h3>
+                      <button onClick={() => setEditingPackage(null)} className="text-neutral-400 hover:text-white">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Package Name</label>
+                          <input
+                            type="text"
+                            required
+                            value={editingPackage.name}
+                            onChange={(e) => setEditingPackage({ ...editingPackage, name: e.target.value })}
+                            placeholder="e.g. Omnichannel Domination"
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none focus:border-[#B4FF39]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Subtitle / Tier Audience</label>
+                          <input
+                            type="text"
+                            value={editingPackage.subtitle}
+                            onChange={(e) => setEditingPackage({ ...editingPackage, subtitle: e.target.value })}
+                            placeholder="e.g. Best for high-scale enterprise operations"
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Monthly Cost (with symbol)</label>
+                          <input
+                            type="text"
+                            required
+                            value={editingPackage.priceMonthly}
+                            onChange={(e) => setEditingPackage({ ...editingPackage, priceMonthly: e.target.value })}
+                            placeholder="₹49,999"
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Quarterly Cost (with symbol)</label>
+                          <input
+                            type="text"
+                            value={editingPackage.priceQuarterly}
+                            onChange={(e) => setEditingPackage({ ...editingPackage, priceQuarterly: e.target.value })}
+                            placeholder="₹1,24,999"
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Billing Period label</label>
+                          <input
+                            type="text"
+                            value={editingPackage.period}
+                            onChange={(e) => setEditingPackage({ ...editingPackage, period: e.target.value })}
+                            placeholder="/ month"
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Badge label (optional)</label>
+                          <input
+                            type="text"
+                            value={editingPackage.badge || ''}
+                            onChange={(e) => setEditingPackage({ ...editingPackage, badge: e.target.value })}
+                            placeholder="e.g. Hot Deal, Best Value"
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                          />
+                        </div>
+                        <div className="flex items-center pt-5">
+                          <label className="flex items-center gap-2 cursor-pointer text-neutral-300 font-semibold">
+                            <input
+                              type="checkbox"
+                              checked={editingPackage.popular}
+                              onChange={(e) => setEditingPackage({ ...editingPackage, popular: e.target.checked })}
+                              className="rounded border-neutral-800 bg-neutral-950 text-[#B4FF39] focus:ring-0"
+                            />
+                            <span>Highlight as Most Popular</span>
+                          </label>
+                        </div>
+                        <div>
+                          <label className="block text-neutral-300 font-semibold mb-1">Border CSS / Accent Mode</label>
+                          <select
+                            value={editingPackage.accent || 'border-neutral-800'}
+                            onChange={(e) => setEditingPackage({ ...editingPackage, accent: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white outline-none"
+                          >
+                            <option value="border-neutral-800">Standard (Dark Border)</option>
+                            <option value="border-[#B4FF39]">Accent Highlight (StreamOn Green)</option>
+                            <option value="border-emerald-500">Eco Growth Accent (Emerald)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-neutral-300 font-semibold">Features Included in Package</label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const f = [...(editingPackage.features || []), ''];
+                              setEditingPackage({ ...editingPackage, features: f });
+                            }}
+                            className="text-[#B4FF39] font-bold hover:underline text-[11px]"
+                          >
+                            + Add Feature Bullet
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {(editingPackage.features || []).map((feat, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={feat}
+                                onChange={(e) => {
+                                  const updated = [...(editingPackage.features || [])];
+                                  updated[idx] = e.target.value;
+                                  setEditingPackage({ ...editingPackage, features: updated });
+                                }}
+                                placeholder={`Feature bullet #${idx + 1}`}
+                                className="flex-1 px-3 py-1.5 rounded-lg bg-neutral-950 border border-neutral-800 text-white outline-none text-xs"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = (editingPackage.features || []).filter((_, fIdx) => fIdx !== idx);
+                                  setEditingPackage({ ...editingPackage, features: updated });
+                                }}
+                                className="text-red-400 hover:text-red-300 px-2 font-semibold"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-800 flex justify-end gap-3">
+                      <button
+                        onClick={() => setEditingPackage(null)}
+                        className="px-4 py-2 rounded-xl bg-neutral-800 text-neutral-300 text-xs font-semibold"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleSavePackage(editingPackage)}
+                        className="px-5 py-2 rounded-xl bg-[#B4FF39] text-neutral-950 text-xs font-bold hover:bg-[#c4ff5e]"
+                      >
+                        Save Package Retainer
                       </button>
                     </div>
                   </div>
