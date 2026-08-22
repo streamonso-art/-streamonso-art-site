@@ -25,11 +25,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == 'streamon.dm@gmail.com' ||
-        request.auth.token.email == 'streamon.so@gmail.com' ||
-        (request.auth.token.email_verified == true)
-      );
+      return isSignedIn() &&
+        request.auth.token.email_verified == true && (
+          request.auth.token.email == 'streamon.dm@gmail.com' ||
+          request.auth.token.email == 'streamon.so@gmail.com'
+        );
     }
 
     // Validation Blueprint for Lead
